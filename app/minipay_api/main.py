@@ -72,10 +72,24 @@ def _gen_ref() -> str:
 
 @app.get("/health")
 def health():
+    """Readiness-style check: verifies the API can actually serve traffic,
+    including DB connectivity. Wire this to a Kubernetes readinessProbe,
+    not livenessProbe -- see investigation/kubernetes-findings.md item 9
+    for why a DB-checking liveness probe causes self-inflicted restart
+    loops during a database incident."""
     ok = db.healthcheck()
     if not ok:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="database unavailable")
     return {"status": "ok", "time": datetime.utcnow().isoformat()}
+
+
+@app.get("/livez")
+def livez():
+    """Liveness check: only confirms the process/event loop is responsive.
+    Deliberately does NOT touch the database, so a DB outage degrades
+    readiness (pod removed from Service endpoints) without also triggering
+    pointless container restarts."""
+    return {"status": "alive", "time": datetime.utcnow().isoformat()}
 
 
 @app.post("/api/customers", response_model=CustomerOut, status_code=status.HTTP_201_CREATED)

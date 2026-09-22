@@ -1,0 +1,64 @@
+# Fixed version of starter/kubernetes/broken-api.yaml.
+# See investigation/kubernetes-findings.md for the defects identified and
+# why each change below was made. Inline comments mark each fix.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minipay-api
+  namespace: minipay
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: minipay-api          # matches Service selector below (finding #1)
+  template:
+    metadata:
+      labels:
+        app: minipay-api
+    spec:
+      containers:
+        - name: api
+          image: minipay-api:local   # finding #4: replace YOUR_IMAGE_HERE;
+                                      # see SETUP.md for how this is built
+                                      # and loaded for a local kind cluster
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: minipay-config
+          env:
+            - name: DB_USER              # finding #6: DB_USER/DB_PASSWORD/
+              valueFrom:                 # MINIPAY_API_KEY were missing entirely
+                secretKeyRef:
+                  name: minipay-secrets
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minipay-secrets
+                  key: DB_PASSWORD
+            - name: MINIPAY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minipay-secrets
+                  key: MINIPAY_API_KEY
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080               # finding #3: was 8081, app listens on 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /livez             # finding #9: liveness must not depend on
+              port: 8080                # the DB, or a DB outage causes restart loops
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:                    # finding #5: no requests/limits at all
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

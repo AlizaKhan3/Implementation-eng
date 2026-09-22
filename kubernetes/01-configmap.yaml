@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minipay-config
+  namespace: minipay
+data:
+  DB_HOST: "minipay-db"
+  DB_PORT: "5432"
+  DB_NAME: "minipay"
+  LOG_LEVEL: "INFO"

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: minipay-api
+  namespace: minipay
+spec:
+  selector:
+    app: minipay-api      # finding #1: was "minipay-backend", matched nothing
+  ports:
+    - port: 80
+      targetPort: 8080     # finding #2: was 8081, container listens on 8080
+  type: ClusterIP
