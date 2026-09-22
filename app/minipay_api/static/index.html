@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>MiniPay Console</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; color: #1a1a1a; }
+  h1 { font-size: 1.4rem; }
+  section { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+  label { display: block; margin-top: 8px; font-size: 0.85rem; color: #444; }
+  input { width: 100%; padding: 6px; margin-top: 2px; box-sizing: border-box; }
+  button { margin-top: 12px; padding: 8px 14px; cursor: pointer; }
+  .result { margin-top: 12px; padding: 10px; border-radius: 6px; white-space: pre-wrap; font-family: monospace; font-size: 0.85rem; }
+  .result.ok { background: #e6f6e6; border: 1px solid #9ad19a; }
+  .result.error { background: #fdeaea; border: 1px solid #e79a9a; }
+</style>
+</head>
+<body>
+<h1>MiniPay Support Console</h1>
+
+<section id="login-section">
+  <h2>1. Sign in</h2>
+  <label for="apiKey">API Key</label>
+  <input id="apiKey" type="password" placeholder="X-API-Key" />
+  <button id="loginBtn">Sign in</button>
+  <div id="loginResult" class="result" style="display:none"></div>
+</section>
+
+<section id="search-section" style="display:none">
+  <h2>2. Search a transaction</h2>
+  <label for="searchRef">Transaction reference</label>
+  <input id="searchRef" placeholder="TXN00012345" />
+  <button id="searchBtn">Search</button>
+  <div id="searchResult" class="result" style="display:none"></div>
+</section>
+
+<section id="payment-section" style="display:none">
+  <h2>3. Create a test payment</h2>
+  <label for="custRef">Customer reference</label>
+  <input id="custRef" placeholder="CUST000001" />
+  <label for="amount">Amount</label>
+  <input id="amount" type="number" step="0.01" placeholder="100.00" />
+  <button id="payBtn">Submit payment</button>
+  <div id="payResult" class="result" style="display:none"></div>
+</section>
+
+<script>
+let apiKey = "";
+
+function show(el, text, ok) {
+  el.style.display = "block";
+  el.className = "result " + (ok ? "ok" : "error");
+  el.textContent = text;
+}
+
+document.getElementById("loginBtn").addEventListener("click", async () => {
+  const key = document.getElementById("apiKey").value.trim();
+  const el = document.getElementById("loginResult");
+  try {
+    const res = await fetch("/health");
+    if (!res.ok) throw new Error("API unreachable");
+    // Health doesn't require auth; validate the key with a lightweight authed call.
+    const check = await fetch("/api/customers/1/payments", { headers: { "X-API-Key": key } });
+    if (check.status === 401) throw new Error("Invalid API key");
+    apiKey = key;
+    show(el, "Signed in.", true);
+    document.getElementById("search-section").style.display = "block";
+    document.getElementById("payment-section").style.display = "block";
+  } catch (e) {
+    show(el, "Sign-in failed: " + e.message, false);
+  }
+});
+
+document.getElementById("searchBtn").addEventListener("click", async () => {
+  const ref = document.getElementById("searchRef").value.trim();
+  const el = document.getElementById("searchResult");
+  try {
+    const res = await fetch("/api/payments/search?ref=" + encodeURIComponent(ref), {
+      headers: { "X-API-Key": apiKey },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.detail || ("HTTP " + res.status));
+    show(el, JSON.stringify(body, null, 2), true);
+  } catch (e) {
+    show(el, "Search failed: " + e.message, false);
+  }
+});
+
+document.getElementById("payBtn").addEventListener("click", async () => {
+  const customer_ref = document.getElementById("custRef").value.trim();
+  const amount = parseFloat(document.getElementById("amount").value);
+  const el = document.getElementById("payResult");
+  try {
+    const res = await fetch("/api/payments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": apiKey },
+      body: JSON.stringify({ customer_ref, amount }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.detail || ("HTTP " + res.status));
+    show(el, JSON.stringify(body, null, 2), true);
+  } catch (e) {
+    show(el, "Payment failed: " + e.message, false);
+  }
+});
+</script>
+</body>
+</html>
