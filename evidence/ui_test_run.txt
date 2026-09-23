@@ -1,0 +1,17 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.14, pytest-8.4.2, pluggy-1.6.0 -- /Users/alizakhan/Downloads/minipay/tests/ui/.venv/bin/python3.12
+cachedir: .pytest_cache
+metadata: {'Python': '3.12.14', 'Platform': 'macOS-26.5-arm64-arm-64bit', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.6.0'}, 'Plugins': {'metadata': '3.1.1', 'html': '4.2.0', 'base-url': '2.1.0', 'playwright': '0.5.2'}, 'Base URL': ''}
+rootdir: /Users/alizakhan/Downloads/minipay/tests/ui
+plugins: metadata-3.1.1, html-4.2.0, base-url-2.1.0, playwright-0.5.2
+collecting ... collected 6 items
+
+test_ui.py::test_login_with_valid_key_succeeds[chromium] PASSED          [ 16%]
+test_ui.py::test_login_with_invalid_key_fails[chromium] PASSED           [ 33%]
+test_ui.py::test_search_existing_transaction_shows_result[chromium] PASSED [ 50%]
+test_ui.py::test_submit_payment_shows_success_result[chromium] PASSED    [ 66%]
+test_ui.py::test_search_nonexistent_transaction_shows_error[chromium] PASSED [ 83%]
+test_ui.py::test_submit_payment_for_unknown_customer_shows_error[chromium] PASSED [100%]
+
+- Generated html report: file:///Users/alizakhan/Downloads/minipay/tests/ui/../../evidence/ui_test_report.html -
+============================== 6 passed in 8.18s ===============================
