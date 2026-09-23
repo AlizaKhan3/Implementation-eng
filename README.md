@@ -1,4 +1,4 @@
-# MiniPay — Paysys Labs Implementation/L2 Technical Assessment
+# MiniPay
 
 A small payment-processing service (API + UI + PostgreSQL) built,
 deployed, tested, and debugged end-to-end for the assessment described in
