@@ -69,9 +69,8 @@ playwright install chromium
 export MINIPAY_UI_URL=http://localhost:8080 MINIPAY_API_KEY=dev-local-key
 pytest -v --browser chromium
 ```
-See `tests/ui/NOTES.md` — this could not be executed end-to-end in the
-development sandbox (Playwright's browser-binary CDN was outside that
-sandbox's network allowlist); run it for real here and save the output.
+Captured run: `evidence/ui_test_run.txt` (6/6 passed) and
+`evidence/ui_test_report.html`. See `tests/ui/NOTES.md`.
 
 ## 7. Kubernetes (kind)
 ```bash
@@ -111,14 +110,12 @@ curl http://localhost:8080/health
 ```
 See `investigation/kubernetes-findings.md` and
 `investigation/INCIDENT-002-RCA.md` for what was wrong with the starter
-manifest and why each fix above was made. **Capture real command output
-here and drop it into a new `evidence/kubernetes.md`** — this repo was
-built in an environment without Docker/kind, so that evidence is not yet
-captured (see the honesty note in `INCIDENT-002-RCA.md`).
+manifest and why each fix was made. Live kind deploy output is in
+`evidence/kubernetes.md`.
 
 ## 8. Rancher
-See `evidence/rancher.md` for the exact procedure and evidence checklist
-(also not completed in the build sandbox, for the same reason as #7).
+See `evidence/rancher.md` for the procedure and linked checklist
+screenshots (`evidence/rancher-*.png`) from the imported kind cluster.
 
 ## Git / branching
 Single-branch (`main`), linear incremental commits, tagged

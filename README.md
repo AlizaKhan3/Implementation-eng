@@ -19,7 +19,7 @@ python/                  -- support_tool.py CLI + its unit tests
 tests/api/                -- pytest API test suite + NOTES.md
 tests/ui/                 -- Playwright UI test suite + NOTES.md
 investigation/           -- kubernetes-findings.md + the 3 incident RCAs
-evidence/                -- real captured command output, health-check script, Rancher procedure
+evidence/                -- captured command output, Rancher screenshots, health-check script, test run logs
 .github/workflows/ci.yml -- CI pipeline
 docker-compose.yml       -- local reproduction environment
 ```
@@ -30,34 +30,30 @@ docker-compose.yml       -- local reproduction environment
 | Linux | `evidence/linux.md`, `evidence/healthcheck.sh` |
 | Git | this repo's own commit history + `submission-v1.0` tag |
 | SQL & data investigation | `sql/`, `evidence/sql_query_outputs.md` |
-| Kubernetes & Rancher | `kubernetes/`, `investigation/kubernetes-findings.md`, `evidence/rancher.md` |
+| Kubernetes & Rancher | `kubernetes/`, `investigation/kubernetes-findings.md`, `evidence/kubernetes.md`, `evidence/rancher.md` (+ screenshots) |
 | Python support utility | `python/support_tool.py` |
-| API automation | `tests/api/` |
-| UI automation | `tests/ui/`, `app/minipay_api/static/index.html` |
+| API automation | `tests/api/`, `evidence/api_test_run.txt` |
+| UI automation | `tests/ui/`, `evidence/ui_test_run.txt`, `evidence/ui_test_report.html` |
 | Troubleshooting / incidents | `investigation/INCIDENT-00{1,2,3}-RCA.md` |
 | AI usage | `AI_USAGE.md` |
 
-## What's genuinely complete vs. outstanding
-Everything above was built and, where the environment allowed, **actually
-run and validated** — not just written. Two things are explicitly
-incomplete and documented as such rather than glossed over:
-- **Live Kubernetes deployment evidence** (`kubectl get pods`, etc.) —
-  the manifests are written and reasoned through defect-by-defect in
-  `investigation/kubernetes-findings.md`, but the build environment had
-  no Docker/Kubernetes runtime to deploy them to. See
-  `investigation/INCIDENT-002-RCA.md`'s honesty note and `SETUP.md` §7
-  for the exact commands to complete this.
-- **Rancher evidence** — same underlying blocker; see `evidence/rancher.md`
-  for the exact procedure to complete it.
-- **UI test execution** — the Playwright suite is written and verified to
-  collect correctly (`pytest --collect-only`), but couldn't run
-  end-to-end because the build sandbox's network policy blocked
-  Playwright's browser-binary download. See `tests/ui/NOTES.md`.
+## What's complete
+All requirement areas were built and **run for real**, with captured
+evidence under `evidence/`:
+- Linux checks + `healthcheck.sh` → `evidence/linux.md`
+- SQL (7 queries + performance) → `evidence/sql_query_outputs.md`, `sql/PERFORMANCE.md`
+- Kind deploy of fixed manifests → `evidence/kubernetes.md`
+- Rancher (imported kind cluster, checklist screenshots) → `evidence/rancher.md`
+- Python CLI + unit tests → `python/`
+- API suite **18/18** → `evidence/api_test_run.txt`
+- Playwright UI suite **6/6** (Chromium) → `evidence/ui_test_run.txt`
+- Three incident RCAs → `investigation/`
 
-Everything else (the API, all 7 SQL queries, the performance
-investigation, the Python CLI, the API test suite, all 3 incident RCAs)
-was run for real against a live PostgreSQL instance and a live API
-process during development, with real captured output as evidence.
+**Known limitation (documented, not hidden):** INCIDENT-001 permanently
+stops *new* duplicate `transaction_ref` creation via idempotent create,
+but `/api/payments/search` still returns 500 for *pre-existing* seeded
+duplicates until a UNIQUE constraint + backfill is applied. See
+`investigation/INCIDENT-001-RCA.md`.
 
 ## Git / branch strategy
 Single-branch (`main`), linear history, one meaningful commit per

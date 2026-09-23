@@ -12,28 +12,15 @@ pytest -v --browser chromium --html=../../evidence/ui_test_report.html --self-co
 `requirements.txt` if you want the HTML report flag above, or drop
 `--html`/`--self-contained-html` and just use `-v` output.)
 
-## Honesty note on evidence
-`pytest --collect-only` in the development sandbox confirms all 6 tests
-collect correctly against real fixtures and selectors (no syntax/import
-errors) — output:
-```
-collected 6 items
-<Function test_login_with_valid_key_succeeds[chromium]>
-<Function test_login_with_invalid_key_fails[chromium]>
-<Function test_search_existing_transaction_shows_result[chromium]>
-<Function test_submit_payment_shows_success_result[chromium]>
-<Function test_search_nonexistent_transaction_shows_error[chromium]>
-<Function test_submit_payment_for_unknown_customer_shows_error[chromium]>
-```
-The sandbox used to build this submission has a restricted network egress
-allowlist that does not include Playwright's browser-binary CDN
-(`playwright.azureedge.net` and mirrors), so `playwright install chromium`
-fails there with `403 Host not in allowlist`, and the suite could not be
-executed end-to-end in that environment. **Run it for real on an
-unrestricted machine before submitting** and drop the actual pass/fail
-output (or `evidence/ui_test_report.html`) into `evidence/`. Do not
-represent this as having been executed if it hasn't — see `AI_USAGE.md`
-for why this is called out explicitly.
+## Evidence
+End-to-end run on this machine against the live compose stack
+(`SETUP.md` §1 + §6):
+
+- Console log: `evidence/ui_test_run.txt` — **6 passed** in ~8s (Chromium)
+- HTML report: `evidence/ui_test_report.html`
+
+Early scaffolding was done in a sandbox that blocked Playwright's
+browser CDN; the submitted evidence is from a full unrestricted run.
 
 ## Selector strategy
 Every interactive element has a `data-testid` attribute (see

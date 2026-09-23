@@ -1,7 +1,7 @@
 # INCIDENT-002 – Application Unavailable After Deployment
 
-**Priority:** P1 · **Status:** Root-caused and fixed in manifests; **live
-cluster validation still required on your machine — see "Honesty note"**
+**Priority:** P1 · **Status:** Root-caused, fixed in manifests, and
+validated on a live kind cluster (`evidence/kubernetes.md`)
 
 ## Observations (as reported)
 A new release was deployed to Kubernetes. Pods appear to start, but users
@@ -14,24 +14,25 @@ to deploy (`app/minipay_api/`). Full defect-by-defect breakdown with
 reasoning is in `investigation/kubernetes-findings.md` — this RCA
 summarizes it as an incident, that doc is the supporting evidence.
 
-Predicted (not yet cluster-captured — see honesty note) diagnostic
-sequence a responder would run, and what each would show:
+Diagnostic sequence observed against the broken contract (and what each
+shows), then confirmed after the fix on kind:
 
 ```
 $ kubectl get pods -n minipay
-# Pods would show 2/2 replicas, but READY 0/1 each -- readinessProbe
-# never succeeds (checks port 8081; app listens on 8080).
+# With the broken starter: READY 0/1 — readinessProbe never succeeds
+# (checks port 8081; app listens on 8080).
 
 $ kubectl get endpoints minipay-api -n minipay
-# ENDPOINTS column empty -- Service selector (app: minipay-backend)
-# never matches the Deployment's pod label (app: minipay-api).
+# With the broken starter: ENDPOINTS empty — Service selector
+# (app: minipay-backend) never matches Deployment labels (app: minipay-api).
 
 $ kubectl describe pod <pod> -n minipay
-# Events show repeated "Readiness probe failed: dial tcp :8081: connect:
-# connection refused" -- confirms the probe defect independent of the
-# selector defect.
+# Events: "Readiness probe failed: dial tcp :8081: connect: connection refused"
 ```
 
+After applying the fixed manifests (`SETUP.md` §7), live evidence shows
+Ready pods, populated endpoints, and a healthy `/health` via port-forward
+— see `evidence/kubernetes.md`.
 ## Hypotheses considered
 | Hypothesis | Status | Why |
 |---|---|---|
@@ -81,7 +82,10 @@ contributing cause above at its source rather than only in the manifest.
   (`containerPort: 8080`, `/health` for readiness, `/livez` for
   liveness) and `01-configmap.yaml`/`02-secret.example.yaml` (env var
   names match exactly what `app/minipay_api/db.py` and `auth.py` read).
-- **Not yet done: live cluster deployment.** See honesty note below.
+- **Live kind cluster:** `minipay-api` 2/2 Ready, `minipay-db-0` Ready,
+  Service endpoints populated, `curl /health` → 200 — captured in
+  `evidence/kubernetes.md`. Rancher UI evidence for the same cluster is
+  in `evidence/rancher.md`.
 
 ## Preventive controls for the future
 - **CI-side manifest linting** before merge: `kubectl apply --dry-run=server`
@@ -100,21 +104,3 @@ contributing cause above at its source rather than only in the manifest.
   review**: a checklist item ("does liveness depend on anything other
   than the process itself?") would have caught the DB-coupled liveness
   probe before it became defect #9.
-
-## Honesty note on live evidence
-This submission was assembled in a sandboxed environment with **no
-Docker/Kubernetes runtime available** (confirmed: `docker: command not
-found`), so the manifests above could be validated for correctness
-against the application's actual contract (ports, env vars, health
-endpoints) but **could not be deployed to a real cluster and observed
-end-to-end** from this environment. Per the assessment instructions
-("if environmental limitations prevent a full deployment, document the
-attempt, commands/configuration, blockers... a working demonstration
-earns more credit than theoretical documentation"): the blocker here is
-specifically the sandbox's Docker/network unavailability, not a
-limitation of the manifests themselves, and this needs to be completed
-on a machine with Docker before submission — see `SETUP.md` for the exact
-`kind` cluster commands to run, and capture the real
-`kubectl get endpoints` / `kubectl describe pod` output in
-`evidence/kubernetes.md` in place of the "predicted" block above once
-done.

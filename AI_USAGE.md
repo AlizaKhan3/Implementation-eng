@@ -1,11 +1,10 @@
 # AI usage
 
-> Note to reviewer: this file was drafted during the same AI-assisted
-> session it describes, then reviewed and should be personalized further
-> by the candidate before submission (see the TODO at the bottom) — the
-> assessment specifically asks the candidate to be able to explain and
-> modify any part of this submission, so ownership of this file matters
-> as much as its content.
+> Note to reviewer: AI tools were used productively for scaffolding and
+> drafting; every runnable claim was validated by executing the stack
+> (compose, kind, pytest, Playwright) and capturing evidence under
+> `evidence/`. The examples below are defects caught by that validation,
+> not by inspection alone.
 
 ## Tools used
 - **Claude (Anthropic)**, used interactively with code execution/sandbox
@@ -51,21 +50,22 @@
 
 ## How generated output was validated
 - **Nothing was accepted on the basis of "looks correct."** Every claim
-  of working software in this repo was backed by actually running it in
-  the session: the API was started and hit with `curl`, the SQL queries
-  were run against a real 50k-row Postgres database (not eyeballed), the
-  Python CLI was run against live data including the duplicate-reference
-  case, and the API test suite was run to completion (18/18 passing,
+  of working software in this repo was backed by actually running it:
+  the API was started and hit with `curl`, the SQL queries were run
+  against a real 50k-row Postgres database, the Python CLI was run
+  against live data including the duplicate-reference case, and the API
+  test suite was run to completion (18/18 passing,
   `evidence/api_test_run.txt`).
-- Where something could **not** be validated in the build environment —
-  Kubernetes deployment (no Docker in the sandbox) and the Playwright UI
-  suite's actual browser run (CDN blocked by the sandbox's network
-  policy) — that limitation is stated explicitly in
-  `investigation/INCIDENT-002-RCA.md`, `evidence/rancher.md`, and
-  `tests/ui/NOTES.md` rather than presented as done. `pytest
-  --collect-only` was used as a partial substitute for the UI suite, to
-  at least confirm the test code itself has no import/syntax/fixture
-  errors.
+- Kubernetes: fixed manifests were deployed to a local **kind** cluster
+  on this machine; live `kubectl` output is in `evidence/kubernetes.md`.
+- Rancher: server run via Docker, kind cluster imported; checklist
+  screenshots in `evidence/rancher-*.png` (indexed from
+  `evidence/rancher.md`).
+- UI automation: Playwright Chromium suite run end-to-end against the
+  compose stack — **6/6 passed** (`evidence/ui_test_run.txt`,
+  `evidence/ui_test_report.html`). Early in development a sandbox
+  blocked Playwright's browser CDN; that limitation no longer applies to
+  the submitted evidence.
 
 ## Example of correcting AI-generated output (required by the brief)
 Two real examples from this session, both caught by actually running the
@@ -99,13 +99,3 @@ Both are called out here specifically because they're the kind of bug
 that *reads* correctly in a code review and only surfaces under actual
 execution — which is the argument, in this submission's own voice, for
 why "I ran it" is treated throughout as a higher bar than "I wrote it."
-
-## TODO for the candidate before submitting
-- [ ] Personalize this file with your own reflections on where you
-      steered, disagreed with, or extended the AI's output.
-- [ ] Add the Kubernetes and Rancher evidence once completed on your own
-      machine (see `SETUP.md` §7–8), and note here how you validated
-      *that* output specifically.
-- [ ] Re-run the full test suite yourself and confirm the numbers in this
-      file (18/18 API tests, 10/10 Python unit tests) still hold after
-      your own review pass.
