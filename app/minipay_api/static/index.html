@@ -21,27 +21,27 @@
 <section id="login-section">
   <h2>1. Sign in</h2>
   <label for="apiKey">API Key</label>
-  <input id="apiKey" type="password" placeholder="X-API-Key" />
-  <button id="loginBtn">Sign in</button>
-  <div id="loginResult" class="result" style="display:none"></div>
+  <input id="apiKey" data-testid="api-key-input" type="password" placeholder="X-API-Key" />
+  <button id="loginBtn" data-testid="login-button">Sign in</button>
+  <div id="loginResult" data-testid="login-result" class="result" style="display:none"></div>
 </section>
 
 <section id="search-section" style="display:none">
   <h2>2. Search a transaction</h2>
   <label for="searchRef">Transaction reference</label>
-  <input id="searchRef" placeholder="TXN00012345" />
-  <button id="searchBtn">Search</button>
-  <div id="searchResult" class="result" style="display:none"></div>
+  <input id="searchRef" data-testid="search-ref-input" placeholder="TXN00012345" />
+  <button id="searchBtn" data-testid="search-button">Search</button>
+  <div id="searchResult" data-testid="search-result" class="result" style="display:none"></div>
 </section>
 
 <section id="payment-section" style="display:none">
   <h2>3. Create a test payment</h2>
   <label for="custRef">Customer reference</label>
-  <input id="custRef" placeholder="CUST000001" />
+  <input id="custRef" data-testid="payment-customer-input" placeholder="CUST000001" />
   <label for="amount">Amount</label>
-  <input id="amount" type="number" step="0.01" placeholder="100.00" />
-  <button id="payBtn">Submit payment</button>
-  <div id="payResult" class="result" style="display:none"></div>
+  <input id="amount" data-testid="payment-amount-input" type="number" step="0.01" placeholder="100.00" />
+  <button id="payBtn" data-testid="payment-submit-button">Submit payment</button>
+  <div id="payResult" data-testid="payment-result" class="result" style="display:none"></div>
 </section>
 
 <script>

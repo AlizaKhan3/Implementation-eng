@@ -1,0 +1,27 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/claude/minipay/tests/api
+plugins: anyio-4.15.1
+collecting ... collected 18 items
+
+test_api.py::test_create_customer_success PASSED                         [  5%]
+test_api.py::test_create_payment_success PASSED                          [ 11%]
+test_api.py::test_get_payment_by_id PASSED                               [ 16%]
+test_api.py::test_list_customer_payments PASSED                          [ 22%]
+test_api.py::test_create_customer_missing_name PASSED                    [ 27%]
+test_api.py::test_create_payment_negative_amount PASSED                  [ 33%]
+test_api.py::test_create_payment_zero_amount PASSED                      [ 38%]
+test_api.py::test_get_payment_unknown_id PASSED                          [ 44%]
+test_api.py::test_create_payment_unknown_customer PASSED                 [ 50%]
+test_api.py::test_list_payments_unknown_customer PASSED                  [ 55%]
+test_api.py::test_search_unknown_ref PASSED                              [ 61%]
+test_api.py::test_create_customer_no_api_key_rejected PASSED             [ 66%]
+test_api.py::test_wrong_api_key_rejected PASSED                          [ 72%]
+test_api.py::test_health_does_not_require_auth PASSED                    [ 77%]
+test_api.py::test_idempotent_payment_replay_returns_same_transaction PASSED [ 83%]
+test_api.py::test_search_with_duplicate_ref_returns_500 PASSED           [ 88%]
+test_api.py::test_payment_response_schema PASSED                         [ 94%]
+test_api.py::test_health_response_time_under_threshold PASSED            [100%]
+
+============================== 18 passed in 0.41s ==============================

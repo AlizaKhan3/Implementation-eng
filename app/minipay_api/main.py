@@ -25,7 +25,7 @@ import string
 import time
 from datetime import datetime
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -108,7 +108,7 @@ def create_customer(payload: CustomerCreate, _=Depends(require_api_key)):
 
 
 @app.post("/api/payments", response_model=PaymentOut, status_code=status.HTTP_201_CREATED)
-def create_payment(payload: PaymentCreate, _=Depends(require_api_key)):
+def create_payment(payload: PaymentCreate, response: Response, _=Depends(require_api_key)):
     with db.get_cursor(commit=True) as cur:
         cur.execute("SELECT id FROM customers WHERE customer_ref = %s", (payload.customer_ref,))
         customer = cur.fetchone()
@@ -126,6 +126,14 @@ def create_payment(payload: PaymentCreate, _=Depends(require_api_key)):
         )
         existing = cur.fetchone()
         if existing:
+            # NOTE: the route decorator's status_code=201 is only a default
+            # for the OpenAPI schema/typical case -- it does NOT change based
+            # on what the handler returns. An idempotent replay must not
+            # claim 201 Created (no new resource was created), so the
+            # status must be overridden explicitly on the Response object.
+            # Caught by tests/api/test_api.py::test_idempotent_payment_replay_returns_same_transaction
+            # during development -- see AI_USAGE.md for how this was found.
+            response.status_code = status.HTTP_200_OK
             existing["idempotent_replay"] = True
             return existing
 
