@@ -1,0 +1,111 @@
+# AI usage
+
+> Note to reviewer: this file was drafted during the same AI-assisted
+> session it describes, then reviewed and should be personalized further
+> by the candidate before submission (see the TODO at the bottom) — the
+> assessment specifically asks the candidate to be able to explain and
+> modify any part of this submission, so ownership of this file matters
+> as much as its content.
+
+## Tools used
+- **Claude (Anthropic)**, used interactively with code execution/sandbox
+  access (able to actually install PostgreSQL, run the API, run pytest,
+  and capture real command output — not just generate text).
+
+## Tasks AI was used for
+- Scaffolding the full repository structure against the assessment's
+  explicit requirements (`README.md`'s required top-level layout).
+- Writing the FastAPI service, SQL queries, Kubernetes manifests, the
+  Python CLI, and both test suites.
+- Deliberately introducing, reproducing, and root-causing the three
+  incident scenarios required by `incidents/`.
+- Drafting documentation (`SETUP.md`, `ARCHITECTURE.md`, the RCAs, this
+  file).
+
+## Representative prompts / interaction summaries
+1. *"Help me build this"* (the original assessment email) — led to a
+   scoping conversation about local environment (Docker only, no
+   Kubernetes tooling pre-installed; FastAPI + Postgres as the stack
+   choice) before any code was written, rather than assuming a stack.
+2. *"Build the MiniPay API"* — resulted in the FastAPI service, with an
+   explicit design ask to make the historical duplicate-`transaction_ref`
+   data (already present in the provided `generate_data.py`) the actual
+   trigger for INCIDENT-001, rather than inventing an unrelated synthetic
+   bug — so the SQL investigation, the Python CLI's duplicate-handling,
+   and the incident RCA would all be evidence of the *same* real defect
+   rather than three disconnected exercises.
+3. *"Actually run this and validate it"* — rather than accepting
+   generated code at face value, the session installed Postgres, started
+   the API, and ran the full stack for real, including generating and
+   loading the ~50k-row synthetic dataset and capturing real
+   `EXPLAIN ANALYZE` output for the performance investigation.
+4. *"Fix the Kubernetes starter file, but document what's wrong before
+   replacing it"* — matching the requirement to identify defects rather
+   than silently fix them; resulted in
+   `investigation/kubernetes-findings.md` being written before
+   `kubernetes/*.yaml`.
+5. *"Write the API test suite and actually run it"* — this is the prompt
+   that surfaced both bugs listed below; the tests were not written to
+   match the implementation, they were run against it and the
+   implementation was corrected when they disagreed.
+
+## How generated output was validated
+- **Nothing was accepted on the basis of "looks correct."** Every claim
+  of working software in this repo was backed by actually running it in
+  the session: the API was started and hit with `curl`, the SQL queries
+  were run against a real 50k-row Postgres database (not eyeballed), the
+  Python CLI was run against live data including the duplicate-reference
+  case, and the API test suite was run to completion (18/18 passing,
+  `evidence/api_test_run.txt`).
+- Where something could **not** be validated in the build environment —
+  Kubernetes deployment (no Docker in the sandbox) and the Playwright UI
+  suite's actual browser run (CDN blocked by the sandbox's network
+  policy) — that limitation is stated explicitly in
+  `investigation/INCIDENT-002-RCA.md`, `evidence/rancher.md`, and
+  `tests/ui/NOTES.md` rather than presented as done. `pytest
+  --collect-only` was used as a partial substitute for the UI suite, to
+  at least confirm the test code itself has no import/syntax/fixture
+  errors.
+
+## Example of correcting AI-generated output (required by the brief)
+Two real examples from this session, both caught by actually running the
+generated tests against the generated implementation rather than reading
+either in isolation:
+
+1. **Route-ordering bug.** The first version of `main.py` declared
+   `GET /api/payments/{payment_id}` before `GET /api/payments/search`.
+   FastAPI/Starlette match routes in declaration order, so a request to
+   `/api/payments/search` was being captured by the `{payment_id}` route
+   with `payment_id="search"`, and never reached the search handler at
+   all. This was caught immediately by manually smoke-testing the
+   endpoints with `curl` before any automated tests even existed, fixed
+   by reordering the two route declarations, and documented with an
+   inline comment in `main.py` explaining *why* the order matters (so a
+   future edit doesn't reintroduce it silently).
+2. **Idempotency status-code bug.** The idempotent-replay branch of
+   `POST /api/payments` was returning HTTP 201 instead of 200, because
+   FastAPI's route-level `status_code=201` decorator argument applies to
+   *every* return path of the handler unless explicitly overridden — it
+   does not adapt based on what the function actually returns. This
+   looked correct on manual `curl` testing (a 201 with a JSON body looks
+   fine at a glance) and was only caught because
+   `tests/api/test_api.py::test_idempotent_payment_replay_returns_same_transaction`
+   asserted the status code explicitly and failed. Fixed by adding an
+   explicit `Response` parameter and setting `response.status_code = 200`
+   on the replay branch; the fix and the reasoning are both documented
+   inline in `main.py`.
+
+Both are called out here specifically because they're the kind of bug
+that *reads* correctly in a code review and only surfaces under actual
+execution — which is the argument, in this submission's own voice, for
+why "I ran it" is treated throughout as a higher bar than "I wrote it."
+
+## TODO for the candidate before submitting
+- [ ] Personalize this file with your own reflections on where you
+      steered, disagreed with, or extended the AI's output.
+- [ ] Add the Kubernetes and Rancher evidence once completed on your own
+      machine (see `SETUP.md` §7–8), and note here how you validated
+      *that* output specifically.
+- [ ] Re-run the full test suite yourself and confirm the numbers in this
+      file (18/18 API tests, 10/10 Python unit tests) still hold after
+      your own review pass.
